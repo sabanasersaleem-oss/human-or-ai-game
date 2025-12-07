@@ -71,7 +71,7 @@ h1, h2, h3, .title {
 # ---------------------------------
 # PAGE TITLE
 # ---------------------------------
-st.markdown("<h1 class='title'>🤖 Human or AI? – PRO Edition</h1>", unsafe_allow_html=True)
+st.markdown("<h1 class='title'>🤖 Human or AI? </h1>", unsafe_allow_html=True)
 st.markdown("<div class='sub'>Can you detect who wrote the sentence — a Human or an AI model?</div>", unsafe_allow_html=True)
 st.markdown("---")
 
