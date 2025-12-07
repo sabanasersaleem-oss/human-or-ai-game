@@ -1,0 +1,42 @@
+import streamlit as st
+import random
+
+st.set_page_config(page_title="Human or AI?", page_icon="🤖", layout="centered")
+
+st.title("🤖 Human or AI? Guessing Game")
+st.write("Read each sentence and guess if it was written by a Human or an AI model.")
+
+statements = {
+    "Sometimes I feel like technology is moving faster than our ability to understand it.": "Human",
+    "Artificial intelligence enables scalable optimization of frameworks for future-driven cognitive models.": "AI",
+    "لو تعرف قديش الذكاء الاصطناعي بخوّف، خصوصًا لما يكتب كلام مضبوط بدون ما ينام ولا يزهق.": "Human",
+    "The future is not written in code; it is generated, optimized, and versioned.": "AI",
+    "أنا مش ضد التكنولوجيا، بس بخاف يوم أصحى ألاقيها بتفهمني أكثر من نفسي.": "Human",
+    "Human cognition is merely a transitional substrate toward post-biological intelligence.": "AI",
+    "Emotions are datasets we haven't fully decoded yet.": "AI",
+    "إذا الروبوتات صارت تفهم النكات، وقتها بلش الخطر الحقيقي.": "Human",
+    "The universe is a neural network and consciousness is just backpropagation.": "AI",
+    "Predictive models are simply mirrors trained on tomorrow’s shadows.": "AI"
+}
+
+keys = list(statements.keys())
+random.shuffle(keys)
+
+score = 0
+
+for text in keys:
+    user_choice = st.radio(f"**{text}**", ["Human", "AI"], key=text)
+    if user_choice == statements[text]:
+        score += 1
+
+st.markdown("---")
+st.subheader(f"Your Score: {score} / {len(keys)}")
+
+if score == len(keys):
+    st.success("🎉 Perfect! You are officially an AI Detector Master!")
+elif score >= 7:
+    st.info("🧠 Great job! You can spot AI like a pro.")
+elif score >= 4:
+    st.warning("🙂 Not bad! Keep learning.")
+else:
+    st.error("😅 AI fooled you! Try again.")
