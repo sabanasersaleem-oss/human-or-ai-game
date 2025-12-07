@@ -1,18 +1,19 @@
 import streamlit as st
+import os
 import random
 import time
 
 # ---------------------------------
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # ---------------------------------
 st.set_page_config(
-    page_title="AI Club: Human or AI?",
-    page_icon="🤖",
+    page_title="AI vs Human — Image Game",
+    page_icon="🧠",
     layout="centered"
 )
 
 # ---------------------------------
-# CUSTOM THEME COLORS
+# CUSTOM CSS
 # ---------------------------------
 st.markdown("""
 <style>
@@ -31,24 +32,13 @@ body {
     color: var(--text);
 }
 
-.sidebar .sidebar-content {
-    background: var(--card);
-}
-
-h1, h2, h3, .title {
-    color: var(--purple) !important;
+h1, h2, h3 {
     text-align:center;
+    color: var(--purple);
     font-weight:900;
 }
 
-.sub {
-    text-align:center;
-    color:#9ca3af;
-    font-size:16px;
-    margin-bottom:10px;
-}
-
-.box {
+.result-box {
     padding:10px;
     border-radius:10px;
     margin-bottom:10px;
@@ -69,130 +59,90 @@ h1, h2, h3, .title {
 """, unsafe_allow_html=True)
 
 # ---------------------------------
-# PAGE TITLE
+# TITLE
 # ---------------------------------
-st.markdown("<h1 class='title'>🤖 Human or AI? </h1>", unsafe_allow_html=True)
-st.markdown("<div class='sub'>Can you detect who wrote the sentence — a Human or an AI model?</div>", unsafe_allow_html=True)
-st.markdown("---")
+st.markdown("<h1>🧠 AI vs Human — Image Detection Game</h1>", unsafe_allow_html=True)
+st.write("Can you guess if the image was created by a **Human** or **Artificial Intelligence**?")
 
 # ---------------------------------
-# QUESTION BANK (text, answer, difficulty)
+# IMAGE FOLDERS
 # ---------------------------------
-STATEMENTS = [
-    ("Sometimes I feel like technology is moving faster than our ability to understand it.", "Human", "Easy"),
-    ("Artificial intelligence enables scalable optimization of frameworks for future-driven cognitive models.", "AI", "Easy"),
-    ("لو تعرف قديش الذكاء الاصطناعي بخوّف، خصوصًا لما يكتب كلام مضبوط بدون ما ينام ولا يزهق.", "Human", "Easy"),
-    ("The future is not written in code; it is generated, optimized, and versioned.", "AI", "Easy"),
-    ("أنا مش ضد التكنولوجيا، بس بخاف يوم أصحى ألاقيها بتفهمني أكثر من نفسي.", "Human", "Easy"),
+AI_FOLDER = "images/ai"
+HUMAN_FOLDER = "images/human"
 
-    ("Human cognition is merely a transitional substrate toward post-biological intelligence.", "AI", "Medium"),
-    ("Emotions are datasets we haven't fully decoded yet.", "AI", "Medium"),
-    ("The universe is a neural network and consciousness is just backpropagation.", "AI", "Medium"),
-    ("إذا الروبوتات صارت تفهم النكات، وقتها بلش الخطر الحقيقي.", "Human", "Medium"),
-    ("I sometimes wonder if algorithms dream of patterns we can't perceive.", "Human", "Medium"),
+ai_images = [os.path.join(AI_FOLDER, img) for img in os.listdir(AI_FOLDER)]
+human_images = [os.path.join(HUMAN_FOLDER, img) for img in os.listdir(HUMAN_FOLDER)]
 
-    ("Language is simply compression — meaning squeezed into symbols.", "AI", "Hard"),
-    ("Entropy isn't chaos; it's an invitation for intelligence to reorganize reality.", "AI", "Hard"),
-    ("لو يوم من الأيام صار الذكاء الاصطناعي يزعل مني، كيف بدي أعتذرله؟", "Human", "Medium"),
-    ("Reality is a dataset, and perception is just preprocessing.", "AI", "Hard"),
-    ("أحيانًا بحس حياتي مثل كود ناقص سيمي كولون.", "Human", "Medium"),
-
-    ("Predictive models are mirrors trained on tomorrow’s shadows.", "AI", "Hard"),
-    ("To understand intelligence, remove the observer — what remains is patterns learning patterns.", "AI", "Hard"),
-]
+all_images = [(img, "AI") for img in ai_images] + [(img, "Human") for img in human_images]
+random.shuffle(all_images)
 
 # ---------------------------------
 # SESSION STATE INIT
 # ---------------------------------
-if "questions" not in st.session_state: st.session_state.questions = []
-if "answers" not in st.session_state: st.session_state.answers = {}
-if "submitted" not in st.session_state: st.session_state.submitted = False
+if "index" not in st.session_state: st.session_state.index = 0
+if "score" not in st.session_state: st.session_state.score = 0
 if "leaderboard" not in st.session_state: st.session_state.leaderboard = []
+if "player" not in st.session_state: st.session_state.player = ""
 
 # ---------------------------------
-# SIDEBAR SETTINGS
+# SIDEBAR (Settings)
 # ---------------------------------
 with st.sidebar:
     st.header("🎮 Game Settings")
-    name = st.text_input("Player Name", placeholder="Your name...")
-    difficulty = st.selectbox("Difficulty Level", ["Mixed", "Easy", "Medium", "Hard"])
-    count = st.selectbox("Number of Questions", [5, 10, 15, 20])
+    name = st.text_input("Player Name:", placeholder="Enter your name")
 
-    def start():
-        if difficulty == "Mixed":
-            pool = STATEMENTS
+    if st.button("Save Name"):
+        st.session_state.player = name if name.strip() else "Anonymous"
+        st.success(f"Welcome, {st.session_state.player}!")
+
+    if st.button("Restart Game"):
+        st.session_state.index = 0
+        st.session_state.score = 0
+        st.rerun()
+
+# ---------------------------------
+# GAME LOGIC
+# ---------------------------------
+if st.session_state.index < len(all_images):
+
+    img_path, correct_answer = all_images[st.session_state.index]
+    st.image(img_path, use_column_width=True)
+
+    guess = st.radio("Your guess:", ["Human", "AI"])
+
+    if st.button("Submit Answer"):
+        if guess == correct_answer:
+            st.session_state.score += 1
+            st.success("Correct! 🎉")
         else:
-            pool = [q for q in STATEMENTS if q[2] == difficulty]
+            st.error(f"Wrong! It was: **{correct_answer}** 😅")
 
-        st.session_state.questions = random.sample(pool, min(count, len(pool)))
-        st.session_state.answers = {}
-        st.session_state.submitted = False
+        st.session_state.index += 1
+        time.sleep(0.8)
+        st.rerun()
 
-    if st.button("🚀 Start / Restart Game"):
-        start()
-        st.rerun()  # FIXED
-
-# ---------------------------------
-# GAME UI
-# ---------------------------------
-if not st.session_state.questions:
-    st.info("Use the sidebar to start the game 👈")
 else:
-    st.subheader("🧠 Guess the author")
+    st.subheader(f"🏁 Final Score: {st.session_state.score} / {len(all_images)}")
+    st.balloons()
 
-    for i, (text, correct, level) in enumerate(st.session_state.questions):
-        key = f"q{i}"
-        st.markdown(f"**Q{i+1}.** {text}")
-        st.session_state.answers[key] = st.radio(
-            "Choose:", ["Human", "AI"], key=key, label_visibility="collapsed"
-        )
-        st.caption(f"Difficulty: {level}")
-        st.markdown("---")
+    st.session_state.leaderboard.append({
+        "name": st.session_state.player or "Anonymous",
+        "score": st.session_state.score,
+        "total": len(all_images),
+        "time": time.time()
+    })
 
-    if st.button("✅ Submit"):
-        st.session_state.submitted = True
-        score = 0
-        details = []
-
-        for i, (text, correct, _) in enumerate(st.session_state.questions):
-            user = st.session_state.answers.get(f"q{i}")
-            is_correct = user == correct
-            details.append((text, user, correct, is_correct))
-            if is_correct: score += 1
-
-        player = name if name.strip() else "Anonymous"
-        st.session_state.leaderboard.append({
-            "name": player, "score": score,
-            "total": len(details), "time": time.time()
-        })
-
-        st.markdown("## 📊 Results")
-        st.subheader(f"Your Score: **{score} / {len(details)}**")
-
-        if score == len(details):
-            st.success("🎉 PERFECT! You're an AI Mind Reader!")
-        elif score >= len(details) * 0.75:
-            st.success("🔥 Excellent! You can spot AI like a pro.")
-        elif score >= len(details) * 0.5:
-            st.info("🙂 Good job! Keep training your intuition.")
-        else:
-            st.warning("😅 The AI fooled you — play again!")
-
-        with st.expander("🔍 Detailed Review"):
-            for text, user, correct, ok in details:
-                css = "correct" if ok else "wrong"
-                icon = "✔️" if ok else "❌"
-                st.markdown(
-                    f"<div class='box {css}'>{icon} <b>{text}</b><br>"
-                    f"Your answer: {user} | Correct: {correct}</div>",
-                    unsafe_allow_html=True
-                )
+    if st.button("Play Again"):
+        st.session_state.index = 0
+        st.session_state.score = 0
+        st.rerun()
 
 # ---------------------------------
 # LEADERBOARD
 # ---------------------------------
 if st.session_state.leaderboard:
     st.markdown("## 🏆 Leaderboard (Local Session)")
-    top = sorted(st.session_state.leaderboard, key=lambda x: x["score"], reverse=True)
-    for i, p in enumerate(top[:10], start=1):
-        st.write(f"**{i}. {p['name']}** — {p['score']} / {p['total']}")
+    sorted_board = sorted(st.session_state.leaderboard, key=lambda x: x["score"], reverse=True)
+
+    for i, entry in enumerate(sorted_board[:10], start=1):
+        st.write(f"**{i}. {entry['name']}** — {entry['score']} / {entry['total']}")
